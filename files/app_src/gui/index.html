@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' file:; script-src 'self' file: 'unsafe-inline'; style-src 'self' file: 'unsafe-inline'; img-src 'self' file: data: blob: https:; font-src 'self' file: data:; connect-src 'self' file:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'" />
+
+<meta name="color-scheme" content="light dark" />
+<title>کتاب ڈاؤن لوڈر</title>
+<script>
+(function () {
+  var THEME_BG = {
+    "brown-dark": "#171310", "brown-light": "#f6f0e2",
+    "green-dark": "#161717", "green-light": "#f2f5ef"
+  };
+  try {
+    var urlTheme = null;
+    try { urlTheme = new URLSearchParams(window.location.search).get("theme"); } catch (e2) { }
+    var saved = urlTheme || localStorage.getItem("rekhta-theme") || "system";
+    var known = ["system", "brown-light", "brown-dark", "green-light", "green-dark"];
+    if (known.indexOf(saved) === -1) saved = "system";
+    var resolved = saved;
+    if (saved === "system") {
+      resolved = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "brown-dark" : "brown-light";
+    }
+    document.documentElement.setAttribute("data-theme", resolved);
+    document.documentElement.style.backgroundColor = THEME_BG[resolved] || THEME_BG["brown-dark"];
+  } catch (e) { }
+})();
+</script>
+<link rel="stylesheet" href="style.css?v=d0b85f074a" />
+</head>
+<body>
+<div class="shell">
+  <header class="topbar" role="tablist" aria-label="مینیو">
+    <div class="topbar-side topbar-side--start">
+      <div class="brand" aria-hidden="true">
+      <img src="logo.png?v=680524b544" class="brand-icon" alt="" width="56" height="56" draggable="false" />
+    </div>
+      <div id="limit-chip" class="limit-chip" hidden>
+        <button id="limit-chip-toggle" type="button" class="limit-chip-toggle" aria-expanded="false" aria-controls="today-pop" aria-haspopup="true">
+          <span id="limit-chip-text" class="limit-chip-text" role="status"></span>
+        </button>
+        <div id="today-pop" class="today-pop" hidden>
+          <div class="today-pop-limit">
+            <span id="limit-chip-time" class="limit-chip-time"></span>
+            <button id="limit-chip-request" type="button" class="link-btn limit-chip-btn" hidden>مزید کی درخواست</button>
+          </div>
+          <h3 class="today-pop-title">آج مکمل ہوئی کتابیں</h3>
+          <ul id="today-done" class="today-list"></ul>
+          <h3 class="today-pop-title">شروع کی ہوئی، نامکمل کتابیں</h3>
+          <ul id="today-started" class="today-list"></ul>
+        </div>
+      </div>
+      <button class="nav-item is-active" data-view="download" data-tip="ڈاؤن لوڈ کریں" data-tip-edge="start" role="tab" aria-selected="true">
+        <span class="nav-icon" id="nav-icon-download"><svg viewBox="0 0 24 24" fill="none">
+          <path class="dl-arrow dl-arrow-1" d="M12 4.75V13.75M12 13.75L8.3 10.05M12 13.75L15.7 10.05" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          <path class="dl-arrow dl-arrow-2" d="M12 4.75V13.75M12 13.75L8.3 10.05M12 13.75L15.7 10.05" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 19.25H19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        </svg></span>
+        <span class="nav-label">ڈاؤن لوڈ کریں</span>
+      </button>
+    </div>
+    <button class="nav-item" data-view="queue" data-tip="ڈاؤن لوڈ قطار" role="tab" aria-selected="false">
+        <span class="nav-icon" id="nav-icon-queue"><svg viewBox="0 0 24 24" fill="none">
+          <rect class="q-row q-row-1" x="4" y="5" width="16" height="3.4" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <rect class="q-row q-row-2" x="4" y="10.3" width="16" height="3.4" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <rect class="q-row q-row-3" x="4" y="15.6" width="10" height="3.4" rx="1" stroke="currentColor" stroke-width="1.5"/>
+        </svg></span>
+        <span class="nav-label">ڈاؤن لوڈ قطار</span>
+      </button>
+    <div class="topbar-side topbar-side--end">
+      <button class="nav-item" data-view="search" data-tip="تلاش کتاب" role="tab" aria-selected="false">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M5 4.8C5 4.1 5.6 3.5 6.3 3.5H14.2V17.3H6.3C5.6 17.3 5 17.9 5 18.6V4.8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M5 18.6C5 17.9 5.6 17.3 6.3 17.3H14.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M7.8 3.5V17.3" stroke="currentColor" stroke-width="1.1" opacity="0.5"/><circle cx="16.9" cy="15.6" r="3.4" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M19.3 18.1L21.2 20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+        <span class="nav-label">تلاش کتاب</span>
+      </button>
+      <div class="nav-peripheral">
+      <button class="nav-item nav-item--icon" data-view="history" data-tip="ہسٹری" role="tab" aria-selected="false">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M12 7.5V12L15 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="nav-label">ہسٹری</span>
+      </button>
+      <button class="nav-item nav-item--icon nav-settings" data-view="settings" data-tip="ترتیبات" data-tip-edge="end" role="tab" aria-selected="false">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><g fill="currentColor"><rect x="10.3" y="1.6" width="3.4" height="2.8" rx="1"/><rect x="10.3" y="1.6" width="3.4" height="2.8" rx="1" transform="rotate(45 12 12)"/><rect x="10.3" y="1.6" width="3.4" height="2.8" rx="1" transform="rotate(90 12 12)"/><rect x="10.3" y="1.6" width="3.4" height="2.8" rx="1" transform="rotate(135 12 12)"/><rect x="10.3" y="1.6" width="3.4" height="2.8" rx="1" transform="rotate(180 12 12)"/><rect x="10.3" y="1.6" width="3.4" height="2.8" rx="1" transform="rotate(225 12 12)"/><rect x="10.3" y="1.6" width="3.4" height="2.8" rx="1" transform="rotate(270 12 12)"/><rect x="10.3" y="1.6" width="3.4" height="2.8" rx="1" transform="rotate(315 12 12)"/></g><circle cx="12" cy="12" r="6.4" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.3" stroke="currentColor" stroke-width="1.7"/></svg></span>
+        <span class="nav-label">ترتیبات</span>
+      </button>
+    </div>
+    </div>
+  </header>
+  <main class="content">
+    <div id="site-notice" class="update-bar site-notice" role="status" hidden></div>
+    <div id="update-bar" class="update-bar has-x" role="status" hidden>
+      <button type="button" class="dialog-x" data-close="update" aria-label="بند کریں" title="بند کریں"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <span id="update-bar-text" class="update-bar-text"></span>
+      <button id="update-bar-now" type="button" class="btn-secondary">ابھی لگائیں</button>
+      <button id="update-bar-later" type="button" class="btn-secondary update-secondary">بعد میں</button>
+    </div>
+    <div id="updated-note" class="update-bar updated-note has-x" role="status" hidden>
+      <button type="button" class="dialog-x" data-close="updated" aria-label="بند کریں" title="بند کریں"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <span id="updated-note-text" class="update-bar-text"></span>
+      <button id="updated-note-more" type="button" class="btn-secondary">تفصیل</button>
+      <div id="updated-note-details" class="update-note-line updated-note-details" hidden></div>
+    </div>
+    <div id="run-strip" class="update-bar run-strip" role="status" hidden>
+      <span class="run-strip-text"><span id="run-strip-text"></span> <b id="run-strip-percent"></b></span>
+      <button id="run-strip-pause" type="button" class="btn-secondary"></button>
+      <button id="run-strip-open" type="button" class="link-btn">ڈاؤن لوڈ ٹیب دیکھیں</button>
+    </div>
+    
+    <section id="view-download" class="view is-active">
+      <div id="home-update-sign" class="update-bar home-update-sign" role="status" hidden>
+        <span id="home-update-text" class="update-bar-text">نئی اپ ڈیٹ موجود ہے</span>
+        <button id="home-update-now" type="button" class="btn-secondary">اپ ڈیٹ کریں</button>
+        <button id="home-update-more" type="button" class="btn-secondary update-secondary" aria-expanded="false"><svg class="update-info-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 11V16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="7.9" r="1.1" fill="currentColor"/></svg><span>تفصیل</span></button>
+        <button id="home-update-later" type="button" class="btn-secondary update-secondary">بعد میں</button>
+        <p id="home-update-details" class="home-update-details update-note-line" hidden></p>
+      </div>
+      <div class="page-header">
+        <h1>ڈاؤن لوڈ کریں</h1>
+        <p id="welcome-line" class="welcome-line"></p>
+        <p>کتاب کا لنک درج کریں، باقی کام ہم پر چھوڑ دیں</p>
+      </div>
+      <div class="panel-card">
+        <div id="clip-chip" class="clip-chip" hidden>
+          <span class="clip-chip-text">ایک کتاب کا لنک کاپی شدہ ہے: <b id="clip-chip-name"></b></span>
+          <span class="clip-chip-actions">
+            <button id="clip-chip-download" type="button" class="btn-secondary">ڈاؤن لوڈ</button>
+            <button id="clip-chip-queue" type="button" class="btn-secondary">قطار میں</button>
+            <button id="clip-chip-close" type="button" class="btn-secondary clip-chip-x" aria-label="بند کریں">×</button>
+          </span>
+        </div>
+        <form id="download-form" class="form" autocomplete="off">
+          <label class="field" for="book-url">
+            <span class="field-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M9.5 14.5L14.5 9.5M8 12L6 14C4.5 15.5 4.5 18 6 19.5C7.5 21 10 21 11.5 19.5L14 17M16 12L18 10C19.5 8.5 19.5 6 18 4.5C16.5 3 14 3 12.5 4.5L10 7" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <input id="book-url" type="text" maxlength="600" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder="https://www.rekhta.org/ebooks/…" dir="ltr" spellcheck="false" />
+            <button id="url-clear-btn" type="button" class="field-clear" title="لنک صاف کریں" aria-label="لنک صاف کریں"><svg viewBox="0 0 24 24" fill="none"><path d="M7 7L17 17M17 7L7 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+          </label>
+          <button id="download-btn" type="submit" class="btn">
+            <span class="btn-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 4V15M12 15L7.5 10.5M12 15L16.5 10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18.5H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+            <span class="btn-label">ڈاؤن لوڈ کریں</span>
+          </button>
+        </form>
+        <p class="sample-row"><button id="sample-book-btn" type="button" class="link-btn" title="ایک چھوٹی کتاب اتار کر ایپ آزما کر دیکھیں">نمونہ کتاب آزمائیں</button></p>
+        <section id="status" class="status" hidden>
+          <div class="status-row">
+            <span id="status-icon" class="status-icon spin"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="var(--accent)" stroke-opacity="0.25" stroke-width="2.2"/><path d="M21 12A9 9 0 0 0 12 3" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+            <span id="status-text" class="status-text">کتاب کی معلومات حاصل کی جا رہی ہیں…</span>
+            <span id="status-percent" class="status-percent">0%</span>
+          </div>
+          <div class="progress-track"><div id="progress-fill" class="progress-fill" style="width:0%"></div></div>
+          <p id="status-sub" class="status-sub"></p>
+          <div class="status-actions">
+            <button id="pause-btn" type="button" class="btn-secondary btn-pause">
+              <span id="pause-btn-icon" class="btn-icon-sm"><svg viewBox="0 0 24 24" fill="none"><rect x="7" y="5" width="3.4" height="14" rx="1" fill="currentColor"/><rect x="13.6" y="5" width="3.4" height="14" rx="1" fill="currentColor"/></svg></span>
+              <span id="pause-btn-label">روکیں</span>
+            </button>
+            <button id="move-to-queue-btn" type="button" class="btn-secondary">
+              <span class="btn-icon-sm"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="6" width="16" height="3" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="4" y="11" width="16" height="3" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="4" y="16" width="10" height="3" rx="1" stroke="currentColor" stroke-width="1.4"/></svg></span>
+              قطار میں منتقل کریں
+            </button>
+            <button id="discard-btn" type="button" class="btn-secondary danger">
+              <span class="btn-icon-sm"><svg viewBox="0 0 24 24" fill="none"><path d="M5 7H19" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9 7V5.5C9 4.9 9.4 4.5 10 4.5H14C14.6 4.5 15 4.9 15 5.5V7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 7L7.7 18.5C7.75 19.3 8.4 20 9.2 20H14.8C15.6 20 16.25 19.3 16.3 18.5L17 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 10.5V16.5M14 10.5V16.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+              خارج کریں
+            </button>
+          </div>
+        </section>
+        <section id="result" class="result" hidden>
+          <span class="result-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9.5" stroke="var(--success)" stroke-width="1.8"/><path d="M8 12.5L10.8 15.3L16 9.5" stroke="var(--success)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <p class="result-title">کتاب کامیابی سے تیار ہو گئی</p>
+          <p id="result-path" class="result-path"></p>
+          <div class="result-actions">
+            <button id="open-folder-btn" class="btn-secondary">
+              <span class="btn-icon-sm"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7.5C4 6.7 4.7 6 5.5 6H9.5L11.5 8H18.5C19.3 8 20 8.7 20 9.5V17.5C20 18.3 19.3 19 18.5 19H5.5C4.7 19 4 18.3 4 17.5V7.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span>
+              فولڈر کھولیں
+            </button>
+            <button id="open-book-btn" class="btn-secondary">
+              <span class="btn-icon-sm"><svg viewBox="0 0 24 24" fill="none"><path d="M12 6.3C10.6 5.1 8.6 4.5 6.6 4.7C5.7 4.8 5 5.6 5 6.5V17.8C5 18.6 5.7 19.3 6.6 19.2C8.5 19 10.5 19.6 12 20.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 6.3C13.4 5.1 15.4 4.5 17.4 4.7C18.3 4.8 19 5.6 19 6.5V17.8C19 18.6 18.3 19.3 17.4 19.2C15.5 19 13.5 19.6 12 20.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 6.3V20.8" stroke="currentColor" stroke-width="1.5"/></svg></span>
+              کتاب کھولیں
+            </button>
+            <button id="download-another-btn" class="btn-secondary">ایک اور کتاب ڈاؤن لوڈ کریں</button>
+          </div>
+        </section>
+        <section id="result-missing" class="result" hidden>
+          <span class="error-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="var(--accent)" stroke-width="1.6"/><path d="M12 11V16.3" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="7.8" r="1" fill="var(--accent)"/></svg></span>
+          <p class="result-title">فائل اپنی جگہ سے ہٹا دی گئی ہے یا موجود نہیں۔</p>
+          <div class="result-actions">
+            <button id="redownload-btn" class="btn-secondary">دوبارہ ڈاؤن لوڈ کریں</button>
+            <button id="addqueue-missing-btn" class="btn-secondary">قطار میں شامل کریں</button>
+            <button id="discard-missing-btn" class="btn-secondary danger">حذف کریں</button>
+          </div>
+        </section>
+        <section id="error" class="error" role="alert" hidden>
+          <span class="error-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="var(--accent)" stroke-width="1.6"/><path d="M12 11V16.3" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="7.8" r="1" fill="var(--accent)"/></svg></span>
+          <p id="error-text" class="error-text"></p>
+          <button id="error-update-btn" type="button" class="btn-secondary" hidden>اپ ڈیٹ کریں</button>
+        </section>
+      </div>
+    </section>
+    
+    <section id="view-queue" class="view">
+      <div class="page-header">
+        <h1>ڈاؤن لوڈ قطار</h1>
+        <p>ایک سے زیادہ کتابیں شامل کریں اور خودکار طور پر سبھی ڈاؤن لوڈ کریں</p>
+      </div>
+      <div id="queue-update-bar" class="update-bar queue-update-bar" role="status" hidden>
+        <span class="update-bar-text">ایپ کا ورژن پرانا ہے، اس لیے ڈاؤن لوڈ رکے ہوئے ہیں۔ ایک بار اپ ڈیٹ لگائیں، پھر پوری قطار چل پڑے گی۔</span>
+        <button id="queue-update-btn" type="button" class="btn-secondary">اپ ڈیٹ کریں</button>
+      </div>
+      <div class="panel-card">
+        <form id="queue-bulk-form" class="form bulk-form">
+          <label class="field-label" for="queue-bulk-text">ایک یا زیادہ لنک شامل کریں</label>
+          <div class="bulk-field-wrap">
+            <textarea id="queue-bulk-text" maxlength="40000" dir="ltr" spellcheck="false" autocomplete="off"></textarea>
+            <div id="queue-bulk-placeholder" class="bulk-placeholder" aria-hidden="true">
+              ہر دوسرے لنک سے پہلے اسپیس
+              <span class="key-icon key-icon-wide" title="Space">Space</span>
+              دیں یا
+              <span class="key-icon" title="Enter"><svg viewBox="0 0 24 24" fill="none"><path d="M18 6.5V11.5C18 12.6 17.1 13.5 16 13.5H7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.3 10.3L7 13.5L10.3 16.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span class="latin-key-word">Enter</span>
+              دبا کر نئی لائن میں جائیں۔
+            </div>
+          </div>
+          <button id="queue-bulk-submit-btn" type="submit" class="btn btn-compact">
+            <span class="btn-icon-sm"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="6" width="16" height="3.2" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="4" y="11.4" width="16" height="3.2" rx="1" stroke="currentColor" stroke-width="1.4"/><circle cx="18.3" cy="18.3" r="4.2" fill="var(--surface)" stroke="currentColor" stroke-width="1.3"/><path d="M18.3 16.3V20.3M16.3 18.3H20.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>
+            شامل کریں
+          </button>
+        </form>
+      </div>
+      <div class="queue-accordion">
+        <div class="queue-header-split">
+          <span class="queue-tab-shape" id="queue-tab-shape" data-active="primary" aria-hidden="true"><svg class="tab-cap tab-cap--l" viewBox="0 0 20 57" aria-hidden="true"><path class="cap-fill" d="M10.5 47A9.5 9.5 0 0 1 1 56.5L1 57L11 57L11 47Z"/><path class="cap-line" d="M20 .5A9.5 9.5 0 0 0 10.5 10L10.5 47A9.5 9.5 0 0 1 1 56.5"/></svg><svg class="tab-cap tab-cap--r" viewBox="0 0 20 57" aria-hidden="true"><path class="cap-fill" d="M10.5 47A9.5 9.5 0 0 1 1 56.5L1 57L11 57L11 47Z"/><path class="cap-line" d="M20 .5A9.5 9.5 0 0 0 10.5 10L10.5 47A9.5 9.5 0 0 1 1 56.5"/></svg></span>
+          <button class="queue-header-zone queue-header-zone--primary is-active" type="button" data-queue="primary" aria-expanded="true">
+            <span class="queue-section-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="7.5" y="4" width="11" height="14.5" rx="1.3" stroke="currentColor" stroke-width="1.5"/><path d="M4.5 7.5V18.5C4.5 19.3 5.2 20 6 20H15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 9H15.5M10 12.5H15.5M10 16H13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+            <span class="queue-section-title">حالیہ قطار</span>
+            <span id="primary-badge" class="queue-count-badge" hidden>0</span>
+            <span class="queue-chevron"><svg viewBox="0 0 24 24" fill="none"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          
+          </button>
+          <button class="queue-header-zone queue-header-zone--secondary" type="button" data-queue="secondary" aria-expanded="false">
+            <span class="queue-section-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M6.5 4.5C6.5 3.95 6.95 3.5 7.5 3.5H16.5C17.05 3.5 17.5 3.95 17.5 4.5V19.5C17.5 20.3 16.65 20.8 15.95 20.4L12 18.1L8.05 20.4C7.35 20.8 6.5 20.3 6.5 19.5V4.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span>
+            <span class="queue-section-title">ثانوی قطار</span>
+            <span id="secondary-badge" class="queue-count-badge" hidden>0</span>
+            <span class="queue-chevron"><svg viewBox="0 0 24 24" fill="none"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          
+          </button>
+        </div>
+        <div id="queue-note-wrap" class="queue-note-wrap">
+  <p id="queue-gap-note" class="queue-gap-note" role="status"><span id="queue-slot-main" class="qs-main">قطار فی الحال موقوف ہے</span><span id="queue-total-note" class="queue-total-note" hidden></span></p>
+        </div>
+        
+        <section class="queue-section queue-section--primary is-expanded" id="queue-section-primary">
+          <div class="queue-section-body">
+            <div class="queue-section-inner">
+              <div class="queue-toolbar">
+                <button id="primary-start-btn" class="btn">
+                  <span id="primary-start-icon" class="btn-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="6.3" width="12" height="2.8" rx="1" fill="currentColor"/><rect x="3.5" y="10.6" width="12" height="2.8" rx="1" fill="currentColor"/><rect x="3.5" y="14.9" width="8" height="2.8" rx="1" fill="currentColor"/><path d="M16.5 8.5L20.5 12L16.5 15.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                  <span id="primary-start-label">قطار چلائیں</span>
+                </button>
+                <label class="select-all-label">
+                  <input type="checkbox" id="primary-select-all" />
+                  سب منتخب کریں
+                </label>
+                <button id="primary-move-btn" class="btn-secondary" disabled>
+                  <span>ثانوی قطار میں منتقل کریں</span>
+                  <span class="btn-icon-sm btn-icon-flip-x"><svg viewBox="0 0 24 24" fill="none"><path d="M6 10C6 16 9.5 19 12 19C14.5 19 18 16 18 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M18 11V4.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M14.7 7.5L18 4.2L21.3 7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </button>
+                <button id="primary-retry-btn" class="link-btn" hidden>ناکام دوبارہ کوشش کریں</button>
+                <button id="primary-clear-btn" class="link-btn danger-link">فہرست صاف کریں</button>
+              </div>
+              <ul id="primary-list" class="queue-list"></ul>
+              <p id="primary-empty" class="empty-note">حالیہ قطار خالی ہے — اوپر سے کتابوں کے لنک شامل کریں۔</p>
+            </div>
+          </div>
+        </section>
+        
+        <section class="queue-section queue-section--secondary is-collapsed" id="queue-section-secondary">
+          <div class="queue-section-body">
+            <div class="queue-section-inner">
+              <div class="queue-toolbar">
+                <span class="btn queue-toolbar-spacer" aria-hidden="true">
+                  <span class="btn-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="6.3" width="12" height="2.8" rx="1" fill="currentColor"/><rect x="3.5" y="10.6" width="12" height="2.8" rx="1" fill="currentColor"/><rect x="3.5" y="14.9" width="8" height="2.8" rx="1" fill="currentColor"/><path d="M16.5 8.5L20.5 12L16.5 15.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                  <span>قطار چلائیں</span>
+                </span>
+                <label class="select-all-label">
+                  <input type="checkbox" id="secondary-select-all" />
+                  سب منتخب کریں
+                </label>
+                <button id="secondary-move-btn" class="btn-secondary" disabled>
+                  <span class="btn-icon-sm"><svg viewBox="0 0 24 24" fill="none"><path d="M6 10C6 16 9.5 19 12 19C14.5 19 18 16 18 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M18 11V4.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M14.7 7.5L18 4.2L21.3 7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                  حالیہ قطار میں منتقل کریں
+                </button>
+                <button id="secondary-clear-btn" class="link-btn danger-link">فہرست صاف کریں</button>
+              </div>
+              <ul id="secondary-list" class="queue-list queue-list--secondary"></ul>
+              <p id="secondary-empty" class="empty-note">ثانوی قطار خالی ہے۔</p>
+            </div>
+          </div>
+        </section>
+      </div>
+      <div id="queue-hold-spacer" aria-hidden="true"></div>
+    </section>
+    
+    <section id="view-search" class="view">
+      <div class="page-header">
+        <h1>تلاش کتاب</h1>
+        <p>ریختہ اور صوفی نامہ کی ویب سائٹس پر موجود کتابیں تلاش کریں</p>
+      </div>
+      <div class="panel-card">
+        <form id="search-form" class="form">
+          <label class="field" for="search-query-input">
+            <span class="field-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M9.5 14.5L14.5 9.5M8 12L6 14C4.5 15.5 4.5 18 6 19.5C7.5 21 10 21 11.5 19.5L14 17M16 12L18 10C19.5 8.5 19.5 6 18 4.5C16.5 3 14 3 12.5 4.5L10 7" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <input id="search-query-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" maxlength="100" placeholder="کتاب کا نام یا مصنف کا نام لکھیں..." dir="rtl" spellcheck="false" />
+          </label>
+          <div class="search-actions-row">
+            <button id="search-submit-btn" type="submit" class="btn btn-compact">
+              <span class="btn-icon-sm"><svg class="ic-search" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6" stroke="currentColor" stroke-width="1.7"/><path d="M15.2 15.2L19.5 19.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><svg class="ic-stop" viewBox="0 0 24 24" fill="none" hidden><rect x="6.5" y="6.5" width="11" height="11" rx="2" fill="currentColor"/></svg></span>
+              <span id="search-submit-label">تلاش کریں</span>
+            </button>
+            <div class="segmented site-toggle" id="search-site-toggle" role="radiogroup" aria-label="ویب سائٹ">
+              <span class="seg-highlight" data-group="search-site"></span>              <button type="button" class="seg-btn site-btn is-active" data-site="rekhta" role="radio" aria-checked="true" title="ریختہ"><svg class="site-logo site-logo--rekhta" viewBox="0 0 448 70.60813" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-label="ریختہ"><path d="M167.46152,244.3c-6.267-5.61951-15.45251-8.42818-27.12238-8.42818-22.36706,0-37.92729,11.67-37.92729,28.41851a24.10359,24.10359,0,0,0,10.58938,20.098c6.37578,4.43011,16.74853,6.91564,29.28358,6.91564,19.55731,0,30.14658-6.05155,33.71271-18.90984H172.648c-3.13409,10.04853-11.99431,15.34371-25.39333,15.34371-14.0466,0-21.17864-7.34758-21.39527-21.93491h50.57C177.39618,258.76,173.29656,249.48642,167.46152,244.3Zm-12.75047,17.72033H125.53628c-.10891-1.18831-.10891-2.0524-.10891-2.701a32.17421,32.17421,0,0,1,2.59324-12.534c2.48542-6.26807,5.83493-8.42927,12.75047-8.42927,4.86324,0,8.32047,1.837,10.69818,5.72722a26.4391,26.4391,0,0,1,3.56613,13.72346A34.03833,34.03833,0,0,1,154.71105,262.02037Z" transform="translate(-32 -220.69593)"/><path d="M232.7301,254.56508c6.15927-6.267,17.18069-10.80589,26.47393-11.02131v-3.13409H224.19421v3.13409c8.32047.43193,10.265,1.18831,10.265,3.88916,0,1.29722-2.26891,3.67384-4.97085,5.29529l-22.36706,13.61455V220.69593c-12.31842.43193-15.236.53975-31.66031.75627v3.67373H185.8339V285.2525h-9.83311v3.566h40.19729v-3.566h-9.07673V270.98939l7.5642-4.75444L228.3001,285.2525h-5.94275v3.566h41.06127v-3.566h-7.6718Z" transform="translate(-32 -220.69593)"/><path d="M350.40777,261.04857c0-6.42157-1.412-12.69781-6.4824-17.82913-4.53891-4.64662-11.02251-6.80782-20.53118-6.80782-11.88649,0-19.77382,3.45831-25.28453,11.13022V220.69593c-13.0748.43193-15.77684.53975-32.6332.75627l.10782,3.67373h10.48156l.32433,60.12657H265.69308v3.566H309.131v-3.566H298.10966V260.4c.0629-4.89039.79846-10.43119,3.2418-13.0748a18.8043,18.8043,0,0,1,13.93878-6.48349c8.21166,0,12.85829,5.40289,12.85829,15.236V285.2525h-10.8048v3.566h43.43789v-3.566H350.40777Z" transform="translate(-32 -220.69593)"/><path d="M392.33152,285.79335a6.28745,6.28745,0,0,1-5.72722-3.2418c-.97289-1.62144-1.0806-2.59313-1.0806-8.7524V243.43486h14.69515l-.00164-3.12558H385.741l-.10956-17.51221h-2.70085c-4.971,13.39793-11.13022,17.61262-26.1496,17.72033v2.91747h8.10384v30.79633c0,3.45722.97289,7.77951,2.37771,9.72529,2.91747,4.43,8.86022,6.80673,16.96406,6.80673,13.52712,0,16.46912-6.39747,16.94935-7.93334l-1.73057-.98935A8.267,8.267,0,0,1,392.33152,285.79335Z" transform="translate(-32 -220.69593)"/><path d="M86.9409,238.29715c-6.77884,0-13.269,3.259-16.42959,10.30281l-.06269-9.67893H67.70471c-1.57958,3.84893-3.37655,7.818-6.69695,10.91055-8.08771,6.80226-18.44215,6.51739-18.44215,6.51739v.00218H35.53582v2.94723h7.02979v25.81033H32v3.5573H81.07154l.01505-3.5573H70.5113V260.99385a28.476,28.476,0,0,1,1.72556-9.91793,15.22426,15.22426,0,0,1,14.704-10.5231c5.065,0,9.41417,2.39546,10.87691,5.18657a13.76286,13.76286,0,0,0-7.96662-2.73756,9.25936,9.25936,0,0,0-9.63545,9.44215c0,4.95885,4.42,8.73387,10.35062,8.73387,6.2515,0,11.64316-5.06776,11.64316-10.99569C102.20952,244.24392,95.78106,238.29715,86.9409,238.29715Z" transform="translate(-32 -220.69593)"/><path d="M480,285.25251l-5.76561-.00155.0104-21.39372c0-12.10191-1.29722-16.74853-5.94275-20.85431-4.53891-4.10589-13.29131-6.4836-24.0972-6.4836-10.69709,0-23.01562,2.1612-28.41851,4.971-4.2136,2.26891-6.267,5.07867-6.267,8.7524,0,4.971,4.32229,8.32047,10.69709,8.32047,5.94374,0,10.26613-3.2418,10.26613-7.67191,0-3.99807-4.21469-7.23976-9.40107-7.23976a13.86089,13.86089,0,0,0-4.10687.75627c3.45831-2.91747,10.26613-4.53782,18.90973-4.53782,9.72529,0,16.3166,4.43011,16.3166,10.9136,0,6.37469-7.23987,10.48058-20.6378,11.56117-9.94191.86507-17.073,2.37771-19.99044,4.21458a12.5803,12.5803,0,0,0-6.05145,10.80589c0,9.07564,7.77951,13.93889,22.25924,13.93889,8.86131,0,16.20878-1.837,20.098-4.86324,1.51373-1.18831,2.59433-2.37662,4.971-5.51071l-.03915,7.88842H480ZM449.60773,281.039c-2.26891,3.67373-7.45529,6.4824-12.10191,6.4824a10.42406,10.42406,0,0,1-10.58938-10.37276c0-5.835,4.10589-9.83311,13.39913-12.96709,7.34758-2.48553,8.42818-3.02518,11.45335-5.72613.32433,4.10578.432,6.15927.432,8.96793C452.201,273.90687,451.44471,278.01265,449.60773,281.039Z" transform="translate(-32 -220.69593)"/></svg></button>
+              <button type="button" class="seg-btn site-btn" data-site="sufinama" role="radio" aria-checked="false" title="صوفی نامہ"><svg class="site-logo site-logo--sufinama" viewBox="0 0 1751.72 635.92" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-label="صوفی نامہ"><path d="m194.33,199.47c-15.77-40.04-.1-72.53-.1-72.53L358.04,1.36l-215,125.67s-26.87,89.82,63.78,143.74C387.02,377.96,1.69,635.92,1.69,635.92c0,0,247.15-136.86,280.93-253.09,34.78-119.67-67.59-130.77-88.3-183.36Z" fill="currentColor"/><path d="m91.37,250.26c41.03,55.88,84.99,53.92,112.34,92.6,36.89,52.17-46.5,141.45-46.5,141.45,0,0,99.93-97.07,68.77-149.26-31.26-52.36-57.63-43.8-95.34-84.2-32.82-35.17-26.57-104.13-26.57-104.13L0,211.56l70.27-27.53s-1.52,35.42,21.1,66.23Z" fill="#CC1F36"/><path d="m66.75,107.45s5.25-18.17,25.79-29.89c20.54-11.72,39.85-5.27,39.85-5.27L73.97,2.38s-11.23-5.83-23.54.76c-12.78,6.83-11,20.44-11,20.44l27.32,83.87Z" fill="#CC1F36"/><path d="m517.17,202.75h-31.76v181.68c-15.85,5.57-30.85,9.43-50.99,9.43-43.28,0-59.99-15.85-59.99-61.27v-129.83h-45.5l13.58,5.33-.22,124.93c0,55.27,29.14,75.41,77.56,75.41,25.71,0,50.99-7.71,66.41-16.28v13.71h39.39l-8.54-5.72.06-197.37Z"/><path d="m676.85,87.48s-16.28,0-29.99,0c-28.71,0-52.28,15.43-52.28,60.84v54.41h-32.99v12h32.99v191.1h39.1l-7.39-6.48v-184.62h50.56v-12h-50.56v-63.84c.14-40.3,50.56-51.43,50.56-51.43Z"/><polygon points="756.14 157.45 738.16 136.76 719.01 158.76 738.16 179.16 756.14 157.45"/><polygon points="752.92 202.64 720.79 202.64 720.79 405.74 760.58 405.74 752.92 400.17 752.92 202.64"/><path d="m984.78,275.59c0-55.28-28.71-75.41-77.55-75.41-25.71,0-50.56,7.71-65.99,16.28v-13.71h-37.96l6.68,5.33v197.77h32.13v-181.67c15.43-5.14,30.85-9,50.99-9,43.28,0,59.99,15.43,59.99,60.84v129.83h38.78l-7.07-5.57v-124.68Z"/><path d="m1197.23,264.02c0-50.56-33.85-63.42-84.41-63.42-24,0-42.82,4.05-59.53,7.47,0,0,113.08-7.47,113.08,54.66v24.42h-58.27c-53.56,0-79.27,21.85-79.27,59.99s24,61.27,76.7,61.27c27.43,0,48.42-7.28,61.27-15.42v12.85h37.66l-7.24-5.57v-136.25Zm-30.85,122.11c-8.14,3.43-28.71,9.43-52.7,9.43-40.28,0-51.84-14.14-51.84-49.7s11.14-47.99,53.98-47.99h50.56v88.26Z"/><path d="m1751.72,405.85l-7.24-5.57v-136.25c0-50.56-33.85-63.42-84.41-63.42-24,0-42.82,4.05-59.53,7.47,0,0,113.08-7.47,113.08,54.66v24.42h-58.27c-53.56,0-79.27,21.85-79.27,59.99s24,61.27,76.7,61.27c27.43,0,48.42-7.28,61.27-15.42v12.85h37.66Zm-38.09-19.71c-8.14,3.43-28.71,9.43-52.7,9.43-40.28,0-51.84-14.14-51.84-49.7s11.14-47.99,53.98-47.99h50.56v88.26Z"/><path d="m1532.28,275.59c0-54.84-22.29-75.41-67.27-75.41-26.57,0-52.71,8.57-73.28,23.14-10.28-16.28-29.14-23.14-60.41-23.14-22.71,0-45.84,7.71-59.56,16.71v-14.14h-41.11l10.27,5.33v197.77h31.71v-181.67c13.29-5.14,27.42-9,44.56-9,47.99,0,53.56,15.43,53.56,60.84v129.83h31.71v-130.25c0-19.28-2.15-34.28-7.28-45.85,15.42-7.71,34.28-14.57,55.7-14.57,39.42,0,49.71,15.43,49.71,60.84v129.83h40.73l-9.03-5.57v-124.68Z"/></svg></button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div id="search-status" class="status" hidden>
+        <div class="status-row">
+          <span id="search-status-icon" class="status-icon spin"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="var(--accent)" stroke-opacity="0.25" stroke-width="2.2"/><path d="M21 12A9 9 0 0 0 12 3" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+          <span id="search-status-text" class="status-text">تلاش جاری ہے…</span>
+          <span id="search-status-percent" class="status-percent">0%</span>
+        </div>
+        <div class="progress-track"><div id="search-progress-fill" class="progress-fill" style="width:0%"></div></div>
+      </div>
+      <div id="search-error" class="error" hidden>
+        <span class="error-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="var(--accent)" stroke-width="1.6"/><path d="M12 11V16.3" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="7.8" r="1" fill="var(--accent)"/></svg></span>
+        <p id="search-error-text" class="error-text"></p>
+      </div>
+      <p id="search-empty" class="empty-note" hidden>کوئی نتیجہ نہیں ملا۔ کوئی اور لفظ آزمائیں۔</p>
+      <p id="search-result-count" class="search-result-count" hidden></p>
+      <ul id="search-results-list" class="search-results-grid"></ul>
+      <div id="search-loadmore-wrap" class="search-loadmore-wrap" hidden>
+        <button id="search-loadmore-btn" type="button" class="btn-secondary">مزید نتائج دیکھیں</button>
+        <div id="search-loadmore-status" class="status search-loadmore-status" hidden>
+          <div class="status-row">
+            <span class="status-icon spin"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="var(--accent)" stroke-opacity="0.25" stroke-width="2.2"/><path d="M21 12A9 9 0 0 0 12 3" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+            <span id="search-loadmore-status-text" class="status-text">مزید نتائج لوڈ ہو رہے ہیں…</span>
+            <span id="search-loadmore-status-percent" class="status-percent">0%</span>
+          </div>
+          <div class="progress-track"><div id="search-loadmore-progress-fill" class="progress-fill" style="width:0%"></div></div>
+        </div>
+      </div>
+    </section>
+    
+    <section id="view-history" class="view">
+      <div class="page-header">
+        <h1>ہسٹری</h1>
+        <p>پہلے ڈاؤن لوڈ کی گئی کتابیں</p>
+      </div>
+      <div class="queue-toolbar history-bar">
+        <label class="field history-search-field" for="history-search-input">
+          <span class="field-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M9.5 14.5L14.5 9.5M8 12L6 14C4.5 15.5 4.5 18 6 19.5C7.5 21 10 21 11.5 19.5L14 17M16 12L18 10C19.5 8.5 19.5 6 18 4.5C16.5 3 14 3 12.5 4.5L10 7" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <input id="history-search-input" type="text" maxlength="100" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder="عنوان سے تلاش کریں…" dir="rtl" spellcheck="false" />
+        </label>
+        <div id="history-site-filters" class="history-site-filters" role="group" aria-label="سائٹ کے مطابق چھانٹی">
+          <button type="button" class="site-filter site-filter--rekhta" data-site="rekhta" aria-pressed="true" title="ریختہ"></button>
+          <button type="button" class="site-filter site-filter--sufinama" data-site="sufinama" aria-pressed="true" title="صوفی نامہ"></button>
+          <button type="button" class="site-filter site-filter--hindwi" data-site="hindwi" aria-pressed="true" title="ہندوی">ہندوی</button>
+        </div>
+        <label class="history-sort-field" for="history-sort">
+          <select id="history-sort" class="history-sort" aria-label="ہسٹری کی ترتیب">
+            <option value="newest">نئی پہلے</option>
+            <option value="oldest">پرانی پہلے</option>
+            <option value="name">نام کے مطابق</option>
+            <option value="size">بڑی فائل پہلے</option>
+            <option value="pages">طویل کتاب پہلے</option>
+          </select>
+        </label>
+        <button id="history-clear-btn" class="link-btn danger-link" title="ہسٹری صاف کریں" aria-label="ہسٹری صاف کریں"><span class="hc-text">ہسٹری صاف کریں</span><span class="hc-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4.5 7H19.5M9.5 7V5C9.5 4.4 9.9 4 10.5 4H13.5C14.1 4 14.5 4.4 14.5 5V7M6.5 7L7.3 19C7.3 19.6 7.8 20 8.4 20H15.6C16.2 20 16.7 19.6 16.7 19L17.5 7M10 11V16M14 11V16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+        </div>
+      <div class="panel-card">
+        <p id="history-search-count" class="search-result-count" hidden></p>
+        <ul id="history-list" class="history-list"></ul>
+        <div id="history-more-wrap" class="history-more-wrap" hidden>
+          <button id="history-more-btn" type="button" class="btn-secondary"></button>
+        </div>
+        <p id="history-empty" class="empty-note">کسی کتاب کا ریکارڈ موجود نہیں۔</p>
+        <p id="history-search-empty" class="empty-note" hidden>اس عنوان سے کوئی کتاب نہیں ملی۔</p>
+      </div>
+    </section>
+    
+    <section id="view-settings" class="view">
+      <div class="page-header">
+        <h1>ترتیبات</h1>
+      </div>
+      
+      <div id="settings-sticky" class="settings-sticky">
+        <label class="field settings-search-field" for="settings-search-input">
+          <span class="field-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6" stroke="var(--accent)" stroke-width="1.6"/><path d="M15 15L20 20" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+          <input id="settings-search-input" type="text" maxlength="100" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder="ترتیبات میں تلاش کریں…" dir="rtl" spellcheck="false" />
+          <button id="settings-search-clear" type="button" class="field-clear" aria-label="تلاش صاف کریں" title="تلاش صاف کریں" hidden><svg viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+        </label>
+        <div id="settings-lang-switch" class="lang-switch" role="group" title="زبان / Language" aria-label="زبان / Language">
+          <span class="lang-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 12H20.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 3.5C14.4 6 15.4 9 15.4 12S14.4 18 12 20.5C9.6 18 8.6 15 8.6 12S9.6 6 12 3.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span>
+          <button type="button" class="lang-btn is-active" data-lang="ur" aria-pressed="true">اردو</button>
+          <button type="button" class="lang-btn" data-lang="en" lang="en" dir="ltr" aria-pressed="false">English</button>
+        </div>
+      </div>
+      <p id="settings-search-empty" class="empty-note" hidden>اس لفظ سے کوئی ترتیب نہیں ملی۔</p>
+      <div class="panel-card settings-card">
+        <div class="settings-section settings-section--account" role="group" aria-labelledby="sec-account">
+          <h2 id="sec-account" class="settings-section-title">اکاؤنٹ</h2>
+        <div class="setting-row" id="account-row" hidden>
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 20H16M12 16V20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+            <div class="setting-label">
+              <strong id="account-title">اس کمپیوٹر کی حالت</strong>
+              <div class="account-grid" id="account-grid">
+                <div class="account-cell"><span class="account-key">گروپ</span><span class="account-val account-chip" id="account-group">—</span></div>
+                <div class="account-cell"><span class="account-key">حالت</span><span class="account-val account-chip" id="account-status">…</span></div>
+                <div class="account-cell"><span class="account-key">آج کی کتابیں</span><span class="account-val" id="account-books">—</span></div>
+                <div class="account-cell"><span class="account-key">آج کے صفحات</span><span class="account-val" id="account-pages">—</span></div>
+                <div class="account-cell"><span class="account-key">درخواست</span><span class="account-val account-small" id="account-request">—</span></div>
+              </div>
+              <span id="account-sub" hidden></span>
+            </div>
+          </div>
+          <div class="setting-actions">
+            <button id="request-btn" class="btn-secondary">اپ گریڈ کی درخواست</button>
+            <button id="code-btn" class="btn-secondary">دعوتی کوڈ</button>
+          </div>
+        </div>
+        </div>
+        <div class="settings-section" role="group" aria-labelledby="sec-look">
+          <h2 id="sec-look" class="settings-section-title">ظاہری شکل</h2>
+        <div class="setting-row setting-row--theme">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5C7.3 3.5 3.5 7.3 3.5 12S7.3 20.5 12 20.5C13 20.5 13.8 19.9 13.8 18.9C13.8 18.4 13.6 18 13.3 17.7C13 17.4 12.8 17 12.8 16.5C12.8 15.5 13.6 14.7 14.6 14.7H16.5C18.7 14.7 20.5 12.9 20.5 10.7C20.5 6.7 16.7 3.5 12 3.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="7.3" cy="10.5" r="1.3" fill="currentColor"/><circle cx="10.3" cy="7.3" r="1.3" fill="currentColor"/><circle cx="14.3" cy="7.6" r="1.3" fill="currentColor"/><circle cx="17" cy="10.8" r="1.3" fill="currentColor"/></svg></span>
+            <div class="setting-label">
+              <strong>تھیم</strong>
+              <span>ایپ کا رنگ کیسا ہو</span>
+            </div>
+          </div>
+          <div class="theme-groups">
+            <div class="segmented" id="theme-segmented-brown">
+              <span class="seg-highlight" data-group="brown"></span>
+              <button data-theme="system" class="seg-btn" title="نظام کے مطابق" aria-label="نظام کے مطابق">
+                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 3.7A8.3 8.3 0 0 1 12 20.3Z" fill="currentColor"/></svg>
+              </button>
+              <button data-theme="brown-light" class="seg-btn" title="ہلکا" aria-label="ہلکا">
+                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" fill="currentColor"/><g stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2.5V5"/><path d="M12 19V21.5"/><path d="M4.2 4.2L6 6"/><path d="M18 18L19.8 19.8"/><path d="M2.5 12H5"/><path d="M19 12H21.5"/><path d="M4.2 19.8L6 18"/><path d="M18 6L19.8 4.2"/></g></svg>
+              </button>
+              <button data-theme="brown-dark" class="seg-btn" title="گہرا" aria-label="گہرا">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M20 14.5C18.7 15.7 17 16.4 15.1 16.4C10.9 16.4 7.5 13 7.5 8.8C7.5 6.9 8.2 5.2 9.4 3.9C5.6 4.8 2.8 8.2 2.8 12.3C2.8 17.1 6.7 21 11.5 21C15.6 21 19 18.2 19.9 14.4C19.9 14.4 19.97 14.44 20 14.5Z" fill="currentColor"/></svg>
+              </button>
+            </div>
+            <div class="segmented segmented--pair" id="theme-segmented-green">
+              <span class="seg-highlight" data-group="green"></span>
+              <button data-theme="green-light" class="seg-btn seg-swatch" title="سبز ہلکا" aria-label="سبز ہلکا">
+                <svg viewBox="0 0 24 24" class="green-icon"><defs><clipPath id="clipGreenLight"><circle cx="12" cy="12" r="9"/></clipPath></defs><g clip-path="url(#clipGreenLight)"><rect x="3" y="3" width="9" height="18" fill="#f2f5ef"/><rect x="12" y="3" width="9" height="18" fill="#3f8a5c"/></g><circle cx="12" cy="12" r="9" fill="none" stroke="#c9a227" stroke-width="1.4"/></svg>
+              </button>
+              <button data-theme="green-dark" class="seg-btn seg-swatch" title="سبز گہرا" aria-label="سبز گہرا">
+                <svg viewBox="0 0 24 24" class="green-icon"><defs><clipPath id="clipGreenDark"><circle cx="12" cy="12" r="9"/></clipPath></defs><g clip-path="url(#clipGreenDark)"><rect x="3" y="3" width="9" height="18" fill="#161717"/><rect x="12" y="3" width="9" height="18" fill="#21c063"/></g><circle cx="12" cy="12" r="9" fill="none" stroke="#c9a227" stroke-width="1.4"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M5 18L10 6L15 18M7 14H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 18V11M14.5 13.5H19.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+            <div class="setting-label">
+              <strong>تحریر کا سائز</strong>
+              <span>پوری ایپ کی تحریر اور بٹن بڑے دکھانے کے لیے</span>
+            </div>
+          </div>
+          <div class="segmented" id="text-size-segmented">
+            <span class="seg-highlight" data-group="text-size"></span>
+            <button data-size="normal" class="seg-btn site-text-btn is-active">معمول</button>
+            <button data-size="large" class="seg-btn site-text-btn">بڑا</button>
+            <button data-size="xlarge" class="seg-btn site-text-btn">بہت بڑا</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="4.5" width="14" height="15" rx="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M8.5 15.5L11 12.5L13 14.5L15.5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div class="setting-label">
+              <strong>تلاش کے کارڈ پر رنگین حرکت</strong>
+              <span>ماؤس لے جانے پر کارڈ کے گرد رنگین بارڈر گھومتا ہے؛ بند کریں تو سادہ آؤٹ لائن آئے گی</span>
+            </div>
+          </div>
+          <button id="card-anim-toggle" class="switch" role="switch" aria-checked="true"><span class="switch-knob"></span></button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 17C8 17 8 7 12 7C16 7 16 14 20 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="20" cy="14" r="1.8" fill="currentColor"/></svg></span>
+            <div class="setting-label">
+              <strong>قطار منتقلی کی اڑان ہدف کا پیچھا کرے</strong>
+              <span>کتابیں ایک قطار سے دوسری میں بھیجتے وقت گنتی کا نقطہ ہدف کا پیچھا کرتا ہے؛ بند کریں تو پرانی لہراتی اڑان آئے گی</span>
+            </div>
+          </div>
+          <button id="fly-chase-toggle" class="switch" role="switch" aria-checked="true"><span class="switch-knob"></span></button>
+        </div>
+        </div>
+        <div class="settings-section" role="group" aria-labelledby="sec-download">
+          <h2 id="sec-download" class="settings-section-title">ڈاؤن لوڈ</h2>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.3" stroke="currentColor" stroke-width="1.5"/><path d="M3.9 12H20.1M12 3.7C14.3 6 15.4 8.8 15.4 12C15.4 15.2 14.3 18 12 20.3C9.7 18 8.6 15.2 8.6 12C8.6 8.8 9.7 6 12 3.7Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></span>
+            <div class="setting-label">
+              <strong>تلاش کے لیے پہلی ویب سائٹ</strong>
+              <span>"تلاش کتاب" ٹیب کھلنے پر ابتدا میں یہی ویب سائٹ فعال ہوگی</span>
+            </div>
+          </div>
+          <div class="segmented" id="default-site-segmented">
+            <span class="seg-highlight" data-group="default-site"></span>            <button data-site="rekhta" class="seg-btn site-text-btn is-active">ریختہ</button>
+            <button data-site="sufinama" class="seg-btn site-text-btn">صوفی نامہ</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5.5" width="16" height="3" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="4" y="10.5" width="16" height="3" rx="1" stroke="currentColor" stroke-width="1.4"/><rect x="4" y="15.5" width="10" height="3" rx="1" stroke="currentColor" stroke-width="1.4"/><path d="M17 15.5L19.5 17L17 18.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div class="setting-label">
+              <strong>نیا لنک کس قطار میں جائے؟</strong>
+              <span>"ڈاؤن لوڈ قطار" میں نیا لنک شامل کرنے پر وہ ڈیفالٹ طور پر یہاں جائے گا</span>
+            </div>
+          </div>
+          <div class="segmented" id="queue-target-segmented">
+            <span class="seg-highlight" data-group="queue-target"></span>
+            <button data-target="primary" class="seg-btn">حالیہ قطار</button>
+            <button data-target="secondary" class="seg-btn">ثانوی قطار</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M6 14.5L12 8.5L18 14.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div class="setting-label">
+              <strong>اوپر جانے کا گول بٹن کس طرف ہو؟</strong>
+              <span>لمبے صفحے پر نیچے آنے پر یہ بٹن اسکرین کے اسی کونے میں نظر آئے گا</span>
+            </div>
+          </div>
+          <div class="segmented" id="scroll-side-segmented">
+            <span class="seg-highlight" data-group="scroll-side"></span>
+            <button data-side="right" class="seg-btn">دائیں</button>
+            <button data-side="left" class="seg-btn">بائیں</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span>
+            <div class="setting-label">
+              <strong>ڈاؤن لوڈ کے دوران کمپیوٹر سونے نہ پائے</strong>
+              <span>رات بھر کی قطار بیچ میں نہیں رکے گی؛ ختم ہوتے ہی عام حالت بحال</span>
+            </div>
+          </div>
+          <button id="keep-awake-toggle" class="switch" role="switch" aria-checked="true"><span class="switch-knob"></span></button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="11.5" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 20h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><rect x="14" y="10.5" width="4.5" height="3.5" rx="1" fill="currentColor"/></svg></span>
+            <div class="setting-label">
+              <strong>ٹرے میں رہیں</strong>
+              <span>بند یا چھوٹی کرنے پر ایپ گھڑی کے پاس کے نشان میں چلتی رہتی ہے؛ نشان نہ دکھے تو چھوٹے تیر میں دیکھیں</span>
+            </div>
+          </div>
+          <button id="tray-toggle" class="switch" role="switch" aria-checked="false"><span class="switch-knob"></span></button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M8.5 12.2L11 14.7L15.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div class="setting-label">
+              <strong>کلپ بورڈ میں کتاب کا لنک ہو تو بتائیں</strong>
+              <span>ڈاؤن لوڈ ٹیب میں ایک چھوٹا چپ آتا ہے؛ کلپ بورڈ صرف آپ کے کمپیوٹر پر پڑھا جاتا ہے، کہیں بھیجا نہیں جاتا</span>
+            </div>
+          </div>
+          <button id="clipboard-chip-toggle" class="switch" role="switch" aria-checked="true"><span class="switch-knob"></span></button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M8.5 12.2L11 14.7L15.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div class="setting-label">
+              <strong>Ctrl+V دبانے پر کتاب کا لنک خود ڈاؤن لوڈ کریں</strong>
+              <span>جب کسی خانے میں لکھ نہ رہے ہوں اور Ctrl+V دبائیں تو کلپ بورڈ میں کتاب کا لنک ملنے پر ڈاؤن لوڈ فوراً شروع ہو جاتا ہے؛ بند کریں تو کچھ نہیں ہوگا</span>
+            </div>
+          </div>
+          <button id="paste-start-toggle" class="switch" role="switch" aria-checked="true"><span class="switch-knob"></span></button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M8.5 12.2L11 14.7L15.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div class="setting-label">
+              <strong>اکیلی ڈاؤن لوڈ ختم ہونے پر کتاب خود کھولیں</strong>
+              <span>صرف ڈاؤن لوڈ ٹیب کی اکیلی کتاب پر؛ قطار کی کتابیں خود نہیں کھلتیں</span>
+            </div>
+          </div>
+          <button id="auto-open-toggle" class="switch" role="switch" aria-checked="false"><span class="switch-knob"></span></button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15L6 16.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 20.5h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+            <div class="setting-label">
+              <strong>ڈاؤن لوڈ مکمل ہونے پر اطلاع</strong>
+              <span>ٹاسک بار کا آئیکن جھپکے گا اور ایپ میں پیغام آئے گا</span>
+            </div>
+          </div>
+          <button id="notify-finish-toggle" class="switch" role="switch" aria-checked="true"><span class="switch-knob"></span></button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M15.5 9.5a3.5 3.5 0 0 1 0 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+            <div class="setting-label">
+              <strong>مکمل ہونے پر ہلکی آواز</strong>
+              <span>بند رکھی گئی ہے؛ چاہیں تو آن کریں</span>
+            </div>
+          </div>
+          <button id="sound-finish-toggle" class="switch" role="switch" aria-checked="true"><span class="switch-knob"></span></button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M9 4H6.5C5.7 4 5 4.7 5 5.5V18.5C5 19.3 5.7 20 6.5 20H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13 8L17 12L13 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 12H9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+            <div class="setting-label">
+              <strong>ڈاؤن لوڈ چلتے ہوئے بند کرنے سے پہلے پوچھیں</strong>
+              <span>ڈاؤن لوڈ یا قطار جاری/رکی ہو تو ایپ بند کرنے سے پہلے پوچھا جائے گا</span>
+            </div>
+          </div>
+          <button id="confirm-close-toggle" class="switch" role="switch" aria-checked="true"><span class="switch-knob"></span></button>
+        </div>
+        </div>
+        <div class="settings-section" role="group" aria-labelledby="sec-space">
+          <h2 id="sec-space" class="settings-section-title">جگہ اور ہسٹری</h2>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 8V18C4 18.8 4.7 19.5 5.5 19.5H18.5C19.3 19.5 20 18.8 20 18V8.5C20 7.7 19.3 7 18.5 7H12L10 4.5H5.5C4.7 4.5 4 5.2 4 6V8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 10.5V15.5M12 15.5L9.5 13M12 15.5L14.5 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div class="setting-label">
+              <strong>ڈاؤن لوڈ لوکیشن</strong>
+              <span id="download-dir-value" class="setting-value"></span>
+            </div>
+          </div>
+          <button id="change-dir-btn" class="btn-secondary">تبدیل کریں</button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 8V18C4 18.8 4.7 19.5 5.5 19.5H12.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4 8V6C4 5.2 4.7 4.5 5.5 4.5H10L12 7H18.5C19.3 7 20 7.7 20 8.5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="16.5" cy="15.5" r="4.3" fill="var(--surface)" stroke="currentColor" stroke-width="1.5"/><path d="M16.5 13.3V15.5L18 16.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div class="setting-label">
+              <strong>عارضی ڈیٹا فولڈر</strong>
+              <span id="temp-dir-value" class="setting-value"></span>
+            </div>
+          </div>
+          <div class="setting-actions">
+            <button id="open-temp-dir-btn" class="btn-secondary">کھولیں</button>
+            <button id="change-temp-dir-btn" class="btn-secondary">تبدیل کریں</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none">
+              <path d="M6 3H13L16.5 6.5V19.5C16.5 20.1 16.1 20.5 15.5 20.5H6C5.4 20.5 5 20.1 5 19.5V4C5 3.4 5.4 3 6 3Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+              <path d="M13 3V6.5H16.5" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+              <path d="M7.3 10H11.3M7.3 12.7H11.3M7.3 15.4H9.8" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+              <path d="M21 3.5L16.3 8.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M14.4 7.6L16.7 9.9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+              <path d="M10.8 10.2L15 8C15.9 7.5 17 8 17.2 9L17.6 10.8C17.8 11.7 17.1 12.6 16.2 12.7L11.4 13.2L10.8 10.2Z" fill="currentColor"/>
+              <circle cx="9.3" cy="19.8" r="0.9" fill="currentColor" opacity="0.55"/>
+              <circle cx="11.8" cy="18.4" r="1.3" fill="currentColor" opacity="0.7"/>
+              <circle cx="14.3" cy="19.2" r="0.85" fill="currentColor" opacity="0.5"/>
+            </svg></span>
+            <div class="setting-label">
+              <strong>عارضی فائلوں کا صفایا کریں</strong>
+              <span>عارضی فولڈر میں پڑی تمام تصاویر اور فولڈر ہمیشہ کے لیے حذف ہو جائیں گی</span>
+              <div class="temp-chips">
+                <span class="temp-chip">عارضی فائلوں کا موجودہ حجم: <bdi id="temp-size-value" class="ltr-val"></bdi></span>
+                <span class="temp-chip">فولڈر <bdi id="temp-drive-value" class="ltr-val">C</bdi> میں دستیاب جگہ: <bdi id="temp-free-value" class="ltr-val"></bdi></span>
+              </div>
+            </div>
+          </div>
+          <button id="clear-temp-btn" class="btn-secondary danger">صفایا کریں</button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M12 7.5V12L15 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div class="setting-label">
+              <strong>ڈاؤن لوڈ کی ہسٹری یاد رکھیں</strong>
+              <span>بند کرنے پر نئی کتابیں ہسٹری میں شامل نہیں ہوں گی</span>
+            </div>
+          </div>
+          <button id="save-history-toggle" class="switch" role="switch" aria-checked="true"><span class="switch-knob"></span></button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6.3H14.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M7.3 6.3V5.1C7.3 4.6 7.7 4.2 8.2 4.2H10.8C11.3 4.2 11.7 4.6 11.7 5.1V6.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.6 6.3L6.15 15.7C6.2 16.4 6.75 17 7.5 17H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.4 6.3L13.1 11.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="16.3" cy="15.8" r="5" fill="var(--surface)" stroke="currentColor" stroke-width="1.5"/><path d="M16.3 13V15.8L18.3 17.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div class="setting-label">
+              <strong>ہسٹری صاف کریں</strong>
+              <span>محفوظ شدہ فہرست اور تھمب نیل ہمیشہ کے لیے حذف ہوں گے</span>
+            </div>
+          </div>
+          <button id="settings-clear-history-btn" class="btn-secondary danger">صاف کریں</button>
+        </div>
+        </div>
+        <div class="settings-section" role="group" aria-labelledby="sec-help">
+          <h2 id="sec-help" class="settings-section-title">مدد اور ایپ کے بارے میں</h2>
+        <div class="setting-row" id="about-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.5"/><path d="M12 11V16M12 8V8.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+            <div class="setting-label">
+              <strong>کتاب ڈاؤن لوڈر</strong>
+              <span id="about-build">ورژن کی معلومات…</span>
+            </div>
+          </div>
+          <div class="setting-actions"><button id="show-shortcuts-btn" class="btn-secondary">کی بورڈ شارٹ کٹس</button><button id="show-guide-btn" class="btn-secondary">رہنمائی دوبارہ دیکھیں</button></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M9.5 14.5L19 5M19 5H14M19 5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div class="setting-label">
+              <strong>شارٹ کٹ بنائیں</strong>
+              <span>ڈیسک ٹاپ اور اسٹارٹ مینیو میں ایپ کا شارٹ کٹ (پہلی بار کھلنے پر خودکار بنتا ہے؛ فولڈر منتقل کیا ہو تو یہاں سے دوبارہ بنائیں)</span>
+            </div>
+          </div>
+          <button id="create-shortcuts-btn" class="btn-secondary">بنائیں</button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 4.5V15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M8 11.5L12 15.5L16 11.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 17.5V18.5C5 19.3 5.7 20 6.5 20H17.5C18.3 20 19 19.3 19 18.5V17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+            <div class="setting-label">
+              <strong>ایپ اپ ڈیٹ لگائیں</strong>
+              <span id="update-status-label">آن لائن چیک کریں، یا موصول شدہ اپ ڈیٹ فائل (.zip) منتخب کریں -- ایپ خود بند ہو کر نئی فائلیں لگا کر دوبارہ کھل جائے گی۔</span>
+            </div>
+          </div>
+          <div class="setting-actions">
+            <button id="check-update-btn" class="btn-secondary" hidden>آن لائن چیک کریں</button>
+            <button id="install-update-btn" class="btn-secondary">فائل منتخب کریں</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M6 3.5H14L18 7.5V20C18 20.3 17.8 20.5 17.5 20.5H6C5.7 20.5 5.5 20.3 5.5 20V4C5.5 3.7 5.7 3.5 6 3.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 3.5V7.5H18" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 12.5H15M9 15.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+            <div class="setting-label">
+              <strong>مسئلے کی رپورٹ</strong>
+              <span>کوئی خرابی آئے تو رپورٹ بنا کر بھیج دیں۔ اس میں صرف لاگ اور سسٹم کی سادہ معلومات ہوتی ہیں؛ آپ کی کتابیں، ہسٹری اور فولڈروں کے نام شامل نہیں ہوتے</span>
+            </div>
+          </div>
+          <div class="setting-actions">
+            <button id="open-logs-btn" class="btn-secondary">لاگ فولڈر</button>
+            <button id="make-report-btn" class="btn-secondary">رپورٹ بنائیں</button>
+          </div>
+        </div>
+        <div class="setting-row" id="detail-log-row" hidden>
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13.5" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M12 13.5V9.5M9.5 3.5H14.5M12 3.5V6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+            <div class="setting-label">
+              <strong>تفصیلی لاگ (صرف مالک کے لیے)</strong>
+              <span>ہر کلک، ہر مرحلے کا وقت، رام اور پروسیسر کا استعمال لکھتی رہتی ہے۔ کتاب کا نام، لنک اور تلاش کا لفظ نہیں لکھا جاتا۔ ٹیسٹ ختم ہوتے ہی بند کر دیں۔ مسئلہ نظر آئے تو Ctrl+Shift+M دبا کر نشان لگائیں۔ <span id="detail-log-size"></span></span>
+            </div>
+          </div>
+          <button id="detail-log-folder-btn" class="btn-secondary">فولڈر کھولیں</button>
+          <button id="detail-log-toggle" class="switch" role="switch" aria-checked="false"><span class="switch-knob"></span></button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-main">
+            <span class="setting-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4.5 12C4.5 7.9 7.9 4.5 12 4.5C14.8 4.5 17.2 6 18.5 8.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M18.5 4.5V8.3H14.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19.5 12C19.5 16.1 16.1 19.5 12 19.5C9.2 19.5 6.8 18 5.5 15.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 19.5V15.7H9.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div class="setting-label">
+              <strong>ڈیفالٹ ترتیبات بحال کریں</strong>
+              <span>تھیم، لوکیشنز اور دیگر تمام ترتیبات اپنی اصل حالت میں واپس آ جائیں گی</span>
+            </div>
+          </div>
+          <button id="reset-settings-btn" class="btn-secondary danger">بحال کریں</button>
+        </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="ctx-menu" class="ctx-menu" role="menu" hidden>
+  <button type="button" class="ctx-item" data-act="undo" role="menuitem"><span class="ctx-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M9 7L5 11L9 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 11H14.5C17 11 19 13 19 15.5C19 18 17 20 14.5 20H11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span><span class="ctx-label">واپس کریں</span></button>
+  <div class="ctx-sep"></div>
+  <button type="button" class="ctx-item" data-act="cut" role="menuitem"><span class="ctx-ico"><svg viewBox="0 0 24 24" fill="none"><circle cx="6.5" cy="17.5" r="2.7" stroke="currentColor" stroke-width="1.6"/><circle cx="17.5" cy="17.5" r="2.7" stroke="currentColor" stroke-width="1.6"/><path d="M8.2 15.3L17.5 4M15.8 15.3L6.5 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><span class="ctx-label">کاٹیں</span></button>
+  <button type="button" class="ctx-item" data-act="copy" role="menuitem"><span class="ctx-ico"><svg viewBox="0 0 24 24" fill="none"><rect x="8.5" y="8.5" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M15.5 8.5V6.5C15.5 5.4 14.6 4.5 13.5 4.5H6.5C5.4 4.5 4.5 5.4 4.5 6.5V13.5C4.5 14.6 5.4 15.5 6.5 15.5H8.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><span class="ctx-label">کاپی کریں</span></button>
+  <button type="button" class="ctx-item" data-act="paste" role="menuitem"><span class="ctx-ico"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="5.5" width="14" height="15" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M9 5.5V4.8C9 4.4 9.4 4 9.8 4H14.2C14.6 4 15 4.4 15 4.8V5.5" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 11H15.5M8.5 14.5H13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span><span class="ctx-label">پیسٹ کریں</span></button>
+  <div class="ctx-sep"></div>
+  <button type="button" class="ctx-item" data-act="selectall" role="menuitem"><span class="ctx-ico"><svg viewBox="0 0 24 24" fill="none"><rect x="4.5" y="4.5" width="15" height="15" rx="2" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2.2"/><path d="M8.5 12.2L11 14.7L15.7 9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="ctx-label">سب منتخب کریں</span></button>
+</div>
+<div id="sr-live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="toast" class="toast" hidden>
+  <span id="toast-icon" class="toast-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9.5" stroke="var(--success)" stroke-width="1.8"/><path d="M8 12.5L10.8 15.3L16 9.5" stroke="var(--success)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+  <span id="toast-text"></span>
+  <button id="toast-undo" class="toast-undo" type="button" hidden>واپس کریں</button>
+</div>
+<div id="update-overlay" class="overlay" hidden>
+  <div class="confirm-box update-box">
+    <div class="status-row">
+      <span class="status-icon spin"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="var(--accent)" stroke-opacity="0.25" stroke-width="2.2"/><path d="M21 12A9 9 0 0 0 12 3" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+      <span id="update-overlay-msg" class="status-text">اپ ڈیٹ لگائی جا رہی ہے…</span>
+      <span id="update-overlay-percent" class="status-percent">6%</span>
+    </div>
+    <div class="progress-track"><div id="update-overlay-fill" class="progress-fill" style="width:6%"></div></div>
+  </div>
+</div>
+<div id="request-overlay" class="overlay" hidden>
+  <div class="confirm-box update-box form-box has-x">
+    <button type="button" class="dialog-x" data-close="request" aria-label="بند کریں" title="بند کریں"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <p>اگلے درجے (زیادہ حد) کے لیے اپنی معلومات لکھیں۔ منتظم دیکھ کر فیصلہ کرے گا اور جواب اسی ایپ میں نظر آئے گا۔</p>
+    <label class="field-label" for="request-name">نام</label>
+    <input id="request-name" class="text-field" type="text" maxlength="60" autocomplete="off">
+    <label class="field-label" for="request-contact">رابطے کا ذریعہ (فون، واٹس ایپ، ای میل وغیرہ)</label>
+    <input id="request-contact" class="text-field ltr-field" type="text" maxlength="100" autocomplete="off">
+    <label class="field-label" for="request-note">پیغام (اختیاری)</label>
+    <textarea id="request-note" class="text-field" rows="3" maxlength="500"></textarea>
+    <div id="request-error" class="field-error"></div>
+    <div class="confirm-actions">
+      <button id="request-cancel" class="btn-secondary">منسوخ کریں</button>
+      <button id="request-send" class="btn-secondary">بھیجیں</button>
+    </div>
+  </div>
+</div>
+<div id="code-overlay" class="overlay" hidden>
+  <div class="confirm-box update-box form-box has-x">
+    <button type="button" class="dialog-x" data-close="code" aria-label="بند کریں" title="بند کریں"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <p id="code-msg">منتظم کا دیا ہوا دعوتی کوڈ یہاں لکھیں۔</p>
+    <input id="code-input" class="text-field ltr-field" type="text" maxlength="40" placeholder="KTB-XXXX-XXXX" autocomplete="off">
+    <div id="code-error" class="field-error"></div>
+    <div class="confirm-actions">
+      <button id="code-cancel" class="btn-secondary">بعد میں</button>
+      <button id="code-send" class="btn-secondary">لاگو کریں</button>
+    </div>
+  </div>
+</div>
+<div id="help-overlay" class="overlay" hidden>
+  <div class="confirm-box help-box has-x" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <button type="button" class="dialog-x" data-close="help" aria-label="بند کریں" title="بند کریں"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <div class="help-scroll">
+    <h2 id="help-title" class="guide-title">کی بورڈ شارٹ کٹس</h2>
+    <ul class="help-list">
+      <li><kbd>Ctrl</kbd>+<kbd>V</kbd><span>کتاب کا لنک چپکائیں اور ڈاؤن لوڈ شروع کریں (جب کسی خانے میں نہ لکھ رہے ہوں)</span></li>
+      <li><kbd>Ctrl</kbd>+<kbd>Enter</kbd><span>لنک قطار میں شامل کریں</span></li>
+      <li><kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>5</kbd><span>ٹیبز (بائیں سے دائیں): ترتیبات، ہسٹری، تلاش، قطار، ڈاؤن لوڈ</span></li>
+      <li><kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>-</kbd><span>تحریر کا سائز بڑا یا چھوٹا (معمول، بڑا، بہت بڑا)؛ Ctrl دبا کر ماؤس کا پہیہ بھی یہی کرتا ہے؛ <kbd>Ctrl</kbd>+<kbd>0</kbd> واپس معمول</span></li>
+      <li><kbd>/</kbd> <kbd>Ctrl</kbd>+<kbd>/</kbd><span>کتاب تلاش کرنے کا خانہ (Ctrl کے ساتھ کسی بھی خانے میں لکھتے ہوئے بھی)</span></li>
+      <li><kbd>Ctrl</kbd>+<kbd>F</kbd> / <kbd>F4</kbd><span>تلاش، ہسٹری اور ترتیبات کے ٹیب میں اسی ٹیب کا تلاش کا خانہ</span></li>
+      <li><kbd>Ctrl</kbd>+<kbd>E</kbd><span>ڈاؤن لوڈ اور قطار کے ٹیب میں لنک لکھنے کا خانہ</span></li>
+      <li><kbd>Esc</kbd><span>جس چیز پر نشان (فوکس) ہو اس سے ہٹا دیں؛ پھر لکھنا شروع کریں تو لکھائی خانے میں جاتی ہے</span></li>
+      <li><kbd>!</kbd> <kbd>?</kbd> <kbd>؟</kbd><span>یہ مدد</span></li>
+    </ul>
+    <p class="help-note">لنک، متن یا .txt فائل کھڑکی پر گھسیٹ کر چھوڑنے سے بھی لنک شامل ہو جاتے ہیں۔</p>
+    </div>
+    <div class="confirm-actions"><button id="help-close" class="btn-secondary">ٹھیک ہے</button></div>
+  </div>
+</div>
+<div id="guide-overlay" class="overlay" hidden>
+  <div class="confirm-box guide-box has-x" role="dialog" aria-modal="true" aria-labelledby="guide-title">
+    <button type="button" class="dialog-x" data-close="guide" aria-label="بند کریں" title="بند کریں"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <div id="guide-step-count" class="guide-step-count"></div>
+    <h2 id="guide-title" class="guide-title"></h2>
+    <p id="guide-text" class="guide-text"></p>
+    <div id="guide-dots" class="guide-dots" aria-hidden="true"></div>
+    <div class="confirm-actions">
+      <button id="guide-skip" class="btn-secondary">چھوڑیں</button>
+      <button id="guide-next" class="btn-secondary guide-next">اگلا</button>
+    </div>
+  </div>
+</div>
+<div id="confirm-overlay" class="overlay" hidden>
+  <div class="confirm-box has-x">
+    <button type="button" class="dialog-x" data-close="confirm" aria-label="بند کریں" title="بند کریں"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <p id="confirm-text">کیا آپ واقعی یہ عمل کرنا چاہتے ہیں؟</p>
+    <p id="confirm-note" class="update-note-line" hidden></p>
+    <label id="confirm-dont-ask-row" class="confirm-dont-ask-row" hidden>
+      <input type="checkbox" id="confirm-dont-ask" />
+      دوبارہ نہ پوچھیں
+    </label>
+    <div class="confirm-actions">
+      <button id="confirm-cancel" class="btn-secondary">منسوخ کریں</button>
+      <button id="confirm-ok" class="btn-secondary danger"><span id="confirm-ok-label">ہاں، صاف کریں</span></button>
+    </div>
+  </div>
+</div>
+<div id="detail-log-dot" class="detail-log-dot" hidden><span class="detail-log-dot-mark"></span><span id="detail-log-dot-text">تفصیلی لاگ چل رہی ہے · نشان: Ctrl+Shift+M</span></div>
+  <div id="drop-hint" class="drop-hint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span class="drop-hint-text">آپ یہاں ماؤس چھوڑ سکتے ہیں</span></div>
+  <button id="scroll-top-btn" type="button" class="scroll-top-btn" aria-label="اوپر جائیں" title="اوپر جائیں" tabindex="-1" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 14.5L12 8.5L18 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+<script src="app.js?v=7413c64c3d"></script>
+</body>
+</html>
